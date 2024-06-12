@@ -1,0 +1,58 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template de deploiement d'une instance de Notebook
+
+Parameters:
+  ST:
+    Description: Systeme Technique
+    Type: String
+  Environnement:
+    Description: Environnement Amazon de deploiement de la stack CloudFormation
+    Type: String
+  Cartographie:
+    Description: Cartographie de deploiement
+    Type: String
+  NomComposant:
+    Description: Nom du Notebook
+    Type: String
+  Version:
+    Description: Version du composant
+    Type: String
+  
+  VPCSubnetIdArray:
+    Description: Ids du sous-reseau
+    Type: String
+  VPCSecurityGroupIdArray:
+    Description: Ids du security group 
+    Type: CommaDelimitedList
+  VolumeSizeInGB:
+    Description: Size of Jupyter notebook EFS storage
+    Type: Number
+    Default: 5
+  InstanceType:
+    Description: Size of computing capacity
+    Type: String
+    Default: ml.t2.medium
+  
+  RoleArnName:
+    Description: Name of the notebook
+    Type: String
+
+Resources:
+
+  SageMakerNotebook:
+    Type: AWS::SageMaker::NotebookInstance
+    Properties: 
+      DirectInternetAccess: Disabled
+      InstanceType: !Ref InstanceType
+      NotebookInstanceName: !Sub ${ST}-${Cartographie}-${NomComposant}
+      RoleArn: !Ref RoleArnName
+      RootAccess: Disabled
+      SecurityGroupIds: !Ref VPCSecurityGroupIdArray
+      SubnetId: !Ref VPCSubnetIdArray
+      VolumeSizeInGB: !Ref VolumeSizeInGB
+
+Outputs:
+  MyNotebook:
+    Value: !Ref MyNotebook
+    Description: Name the instance deployed

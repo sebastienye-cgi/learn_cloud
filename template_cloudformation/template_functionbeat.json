@@ -1,0 +1,166 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+    "fnbfncloudwatchlogs": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": "test-api-gateway-2",
+          "S3Key": "functionbeat-deployment/functionbeat.zip"
+        },
+        "Description": "lambda function for cloudwatch logs",
+        "Environment": {
+          "Variables": {
+            "BEAT_STRICT_PERMS": "false",
+            "ENABLED_FUNCTIONS": "fn-cloudwatch-logs"
+          }
+        },
+        "FunctionName": "fn-cloudwatch-logs",
+        "Handler": "functionbeat-aws",
+        "MemorySize": 128,
+        "ReservedConcurrentExecutions": 5,
+        "Role": {
+          "Fn::GetAtt": [
+            "fnbfncloudwatchlogsIAMRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "Runtime": "go1.x",
+        "Timeout": 3
+      }
+    },
+    "fnbfncloudwatchlogsIAMRoleLambdaExecution": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "lambda.",
+                      {
+                        "Ref": "AWS::URLSuffix"
+                      }
+                    ]
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "Path": "/",
+        "PermissionsBoundary": "arn:aws:iam::737053043147:policy/CIA/DevBoundaryCIA",
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "logs:CreateLogGroup",
+                  "Resource": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+                },
+                {
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "s3:*"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/fn-cloudwatch-logs:*"
+                    }
+                  ]
+                }
+              ]
+            },
+            "PolicyName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "fnb",
+                  "lambda",
+                  "fn-cloudwatch-logs"
+                ]
+              ]
+            }
+          }
+        ],
+        "RoleName": "functionbeat-lambda-fn-cloudwatch-logs"
+      }
+    },
+    "fnbfncloudwatchlogsLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/functionbeat-lambda-fn-cloudwatch-logs"
+      }
+    },
+    "fnbfncloudwatchlogsPermission0": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "fnbfncloudwatchlogs",
+            "Arn"
+          ]
+        },
+        "Principal": {
+          "Fn::Join": [
+            "",
+            [
+              "logs.",
+              {
+                "Ref": "AWS::Region"
+              },
+              ".",
+              {
+                "Ref": "AWS::URLSuffix"
+              }
+            ]
+          ]
+        },
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":logs:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":log-group:",
+              "/aws/lambda/test-alarm",
+              ":*"
+            ]
+          ]
+        }
+      }
+    },
+    "fnbfncloudwatchlogsSFawslambdaSAPIADoublonFacturesTRAINlambdagcpjobprocessing": {
+      "Type": "AWS::Logs::SubscriptionFilter",
+      "Properties": {
+        "DestinationArn": {
+          "Fn::GetAtt": [
+            "fnbfncloudwatchlogs",
+            "Arn"
+          ]
+        },
+        "FilterPattern": "",
+        "LogGroupName": "/aws/lambda/test-alarm"
+      }
+    }
+  }
+}

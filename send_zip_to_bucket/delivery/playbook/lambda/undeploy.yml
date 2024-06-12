@@ -1,0 +1,11 @@
+# fichier lu par l'orchestrateur pour désinstaller le composant
+- name: "Suppression du composant {{ ideploy_composant_nom }}"
+  hosts: "{{ ideploy_composant_nom }}"
+
+  tasks:
+    - ansible.builtin.import_role:
+        name: bytel_deploy_cloudformation
+      vars:
+        aws_environnement: "{{ aws_stack_domaine }}"
+        composant_name: "{{ ideploy_composant_nom }}"
+        undeploy: true

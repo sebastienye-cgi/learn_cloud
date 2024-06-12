@@ -1,0 +1,25 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template d'un bucket S3 avec lifecycle policy
+
+Parameters:
+  BucketName:
+    Description: Name of the bucket
+    Type: String
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      AccessControl: Private
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteContentAfter1day
+            Status: Enabled
+            ExpirationInDays: 1
+
+Outputs:
+  S3Bucket:
+    Value: !Ref S3Bucket
+    Description: Name of the sample Amazon S3 bucket with a lifecycle configuration.

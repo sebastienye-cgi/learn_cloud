@@ -1,0 +1,7 @@
+- name: "Apprendre Ansible tuto"
+  hosts: localhost
+
+  tasks:
+    - name: "Affichage d'un message de debug"
+      ansible.builtin.debug:
+        msg: "Hello World using the builtin Ansible's method"

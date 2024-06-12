@@ -1,0 +1,31 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template BCloud de deploiement d'une webapp autoscalable
+
+Parameters:
+  VPCSecurityGroupIdArray:
+    Description: Ids du security group 
+    Type: CommaDelimitedList
+  VPCSubnetIdArray:
+    Description: Ids du sous-reseau
+    Type: CommaDelimitedList
+
+Resources:
+  MyS3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Join
+        - '-'
+        - - test
+          - !Ref 'AWS::Region'
+          - cznflkefnk
+
+Outputs:
+  HelloWorld:
+    Description: Hello World
+    Value: "Hello World"
+  VPCSubnetIdArrayValue:
+    Description: Ids du sous-reseau
+    Value: !Join
+      - ';'
+      - !Ref VPCSubnetIdArray

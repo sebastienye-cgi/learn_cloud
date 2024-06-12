@@ -1,0 +1,54 @@
+# fichier lu par l'orchestrateur pour déployer le composant
+- name: Deploiement des secrets
+  hosts: "{{ ideploy_composant_nom }}"
+  vars_files:
+    - vars/common.yml
+  vars:
+    s3_lambda_path: "packages/{{ ideploy_composant_nom }}/{{ ideploy_composant_version }}/{{ ideploy_composant_nom }}-{{ ideploy_composant_version }}.zip"
+                   
+  tasks:
+
+    - name: Telechargement de la version du composant
+      bytel_refpub:
+        name: "{{ ideploy_composant_nom }}"
+        version: "{{ ideploy_composant_version }}"
+        group_id: 'composant'
+        state: downloaded
+        decompress: false
+        repo_name: "{{ ideploy_st_nom }}"
+        token: "{{ lookup('bytel_dechiffrement', token_artifactory_encrypt) }}"
+        path: "{{ s3_lambda_path | basename }}"
+
+    - name: Envois du livrable sur s3
+      community.aws.s3_sync:
+        aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
+        aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
+        security_token: "{{ assumed_role.sts_creds.session_token }}"
+        region: "{{ aws_region }}"
+        bucket: "{{ bucket_name_deploiement }}"
+        file_root: "{{ s3_lambda_path | basename }}"
+        delete: yes
+        key_prefix: "{{ s3_lambda_path | dirname }}"
+        file_change_strategy: checksum
+      environment:
+        https_proxy: "{{ ansible_env.AWS_HTTPS_PROXY }}"
+
+    - ansible.builtin.import_role:
+        name: bytel_deploy_cloudformation
+      vars:
+        composant_name: "{{ ideploy_composant_nom }}"
+        aws_environnement: "{{ aws_stack_domaine }}"
+        aws_stack_template: "files/stacks/lambda-helloworld.yml"
+        composant_version: "{{ ideploy_composant_version }}"
+        aws_stack_parameters:
+          ST: "{{ ideploy_st_nom }}"
+          Environnement: "{{ aws_stack_domaine }}"
+          Cartographie: "{{ ideploy_cartographie_nom }}"
+          NomComposant: "{{ ideploy_composant_nom }}"
+          Version: "{{ ideploy_composant_version }}"
+          LambdaZipPath: "{{ s3_lambda_path }}"
+          BucketDeploy: "{{ bucket_name_deploiement }}"
+          VPCSecurityGroupIdArray: "{{ security_group_id_array }}"
+          VPCSubnetIdArray: "{{ subnet_id_array }}"
+          MemorySize: "{{ memory_size }}"
+          Timeout: "{{ timeout }}"

@@ -1,0 +1,114 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template BCloud de deploiement d'une webapp autoscalable
+Parameters:
+  ST:
+    Description: Systeme Technique
+    Type: String
+  Environnement:
+    Description: Environnement Amazon de deploiement de la stack CloudFormation
+    Type: String
+  Cartographie:
+    Description: Cartographie de deploiement
+    Type: String
+  NomComposant:
+    Description: nom du composant
+    Type: String
+  Version:
+    Description: Version du composant
+    Type: String
+  BucketDeploy:
+    Description: Nom du bucket
+    Type: String
+  LambdaZipPath:
+    Description: Chemin vers le code de la lambda sur le bucket
+    Type: String
+  PermissionsBoundary:
+    Description: Nom de la boundary
+    Type: String
+    Default: AppBoundary
+  VPCSecurityGroupIdArray:
+    Description: Ids du security group 
+    Type: CommaDelimitedList
+  VPCSubnetIdArray:
+    Description: Ids du sous-reseau
+    Type: CommaDelimitedList
+  MemorySize:
+      Description: Size of lambda MemorySize
+      Type: Number
+  Timeout:
+      Description: Timeout value for lambda
+      Type: Number
+
+
+Resources:
+  LAMBDA:
+    Type: AWS::Lambda::Function
+    DependsOn: ComposantPolicy
+    Properties:
+      FunctionName: !Sub ${ST}-${Cartographie}-${NomComposant}
+      Description: "Lambda that sends mail with prediction made by the AI engine"
+      PackageType: 'Zip'
+      Runtime: python3.8
+      Handler: main.lambda_handler
+      Code:
+        S3Bucket: !Sub ${BucketDeploy}
+        S3Key: !Sub ${LambdaZipPath}
+      MemorySize: !Ref MemorySize
+      Timeout: !Ref Timeout
+      Role: !GetAtt ComposantRole.Arn
+      VpcConfig:
+        SecurityGroupIds: !Ref VPCSecurityGroupIdArray
+        SubnetIds: !Ref VPCSubnetIdArray
+      
+  ComposantRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      PermissionsBoundary:
+        Fn::ImportValue:
+          Ref: PermissionsBoundary
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: 
+              - lambda.amazonaws.com
+          Action: sts:AssumeRole
+          
+  ComposantPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      Roles:
+        - Ref: ComposantRole
+      PolicyName: !Sub ${ST}-${Cartographie}-${NomComposant}
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+            - ec2:DescribeNetworkInterfaces
+            - ec2:CreateNetworkInterface
+            - ec2:DeleteNetworkInterface
+            - ec2:DescribeInstances
+            - ec2:AttachNetworkInterface
+            Resource: "*"
+            Effect: Allow
+          - Action:
+              - s3:GetBucketLocation
+              - s3:ListBucket
+            Resource: 
+              - !Sub arn:aws:s3:::${BucketDeploy}
+            Effect: Allow
+          - Action:
+              - s3:Get*
+              - s3:List*
+            Resource: 
+              - !Sub arn:aws:s3:::${BucketDeploy}/*
+            Effect: Allow
+          - Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:DescribeLogGroups
+              - logs:DescribeLogStreams
+              - logs:PutLogEvents
+            Resource: !Sub arn:aws:logs:*:*:*/${ST}-${Cartographie}-${NomComposant}*
+            Effect: Allow

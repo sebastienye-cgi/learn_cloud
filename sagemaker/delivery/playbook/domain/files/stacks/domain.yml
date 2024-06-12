@@ -1,0 +1,87 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template BCloud de deploiement d'une webapp autoscalable
+Parameters:
+  ST:
+    Description: Systeme Technique
+    Type: String
+  Environnement:
+    Description: Environnement Amazon de deploiement de la stack CloudFormation
+    Type: String
+  Cartographie:
+    Description: Cartographie de deploiement
+    Type: String
+  NomComposant:
+    Description: nom du composant
+    Type: String
+  Version:
+    Description: Version du composant
+    Type: String
+  VPCSecurityGroupIdArray:
+    Description: Ids du security group 
+    Type: CommaDelimitedList
+  VPCSubnetIdArray:
+    Description: Ids du sous-reseau
+    Type: CommaDelimitedList
+  VPCId:
+    Description: Id du VPC
+    Type: String
+
+
+Resources:
+  SgmPlateform:
+      Type: 'AWS::SageMaker::Domain'
+      Properties: 
+        AppNetworkAccessType: "VpcOnly"
+        AuthMode: "IAM"
+        DefaultUserSettings: 
+          ExecutionRole: "arn:aws:iam::982528379266:role/sgm-dev-admin"
+          SecurityGroups: !Ref VPCSecurityGroupIdArray
+        DomainName: !Sub ${ST}-${Cartographie}-${NomComposant}
+        SubnetIds:  !Ref VPCSubnetIdArray
+        VpcId: !Ref VPCId
+
+  ComposantRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      PermissionsBoundary:
+        Fn::ImportValue: "AppBoundary"
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: 
+              - sagemaker.amazonaws.com
+          Action: sts:AssumeRole
+
+  ComposantPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      Roles:
+        - Ref: ComposantRole
+      PolicyName: !Sub ${ST}-${Cartographie}-${NomComposant}
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+            - "*"
+            Resource: "*"
+            Effect: Allow
+
+Outputs:
+  DomainId:
+    Description: 'domain Id of sgm studio'
+    Value: !GetAtt SgmPlateform.DomainId
+    Export:
+      Name: "SageMaker-Domain-Id"
+
+  SgmStudioEfs:
+    Description: 'domain Id of sgm studio'
+    Value: !GetAtt SgmPlateform.HomeEfsFileSystemId
+    Export:
+      Name: "SageMaker-Efs-Id"
+
+
+
+
+          

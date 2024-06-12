@@ -1,0 +1,12 @@
+---
+ans_version: "3.2"
+
+roles_dependencies:
+  - { name: bytel_bcloud, version: 4.0.3 }
+
+modules_dependencies:
+ - { name: bytel_refpub, version: 2.0.0 }
+ - { name: bytel_aws_resources_arn, version: 1.1.0 }
+
+plugins_dependencies:
+  - { name: lookup_bytel_dechiffrement, version: 2.0.0, type: lookup }

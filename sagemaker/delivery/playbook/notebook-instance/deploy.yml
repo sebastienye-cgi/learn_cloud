@@ -1,0 +1,23 @@
+- name: "Deploiement du composant {{ ideploy_composant_nom }}"
+  hosts: "{{ ideploy_composant_nom }}"
+  vars_files:
+    - vars/common.yml
+
+  tasks:
+    - ansible.builtin.import_role:
+        name: bytel_deploy_cloudformation
+      vars:
+        composant_name: "{{ ideploy_composant_nom }}"
+        aws_environnement: "{{ aws_stack_domaine }}"
+        aws_stack_template: "files/stacks/cloudwatch.yml"
+        composant_version: "{{ ideploy_composant_version }}"
+        aws_stack_parameters:
+          ST: "{{ ideploy_st_nom }}"
+          Environnement: "{{ aws_stack_domaine }}"
+          Cartographie: "{{ ideploy_cartographie_nom }}"
+          NomComposant: "{{ ideploy_composant_nom }}"
+          Version: "{{ ideploy_composant_version }}"
+
+          VPCSubnetIdArray: "{{ subnet_id_array }}"
+          VPCSecurityGroupIdArray: "{{ security_group_id_array }}"
+          RoleArnName: "{{ role_arn }}"

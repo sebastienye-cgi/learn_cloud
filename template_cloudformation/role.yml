@@ -1,0 +1,30 @@
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template de deploiement d'un role avec Cloudformation
+
+Parameters:
+  RoleName:
+    Description: Name of the role
+    Type: String
+
+Resources:
+  MyTestRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      PermissionsBoundary: "arn:aws:iam::982528379266:policy/CIA/DevBoundaryCIA"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Description: Role Test deployed with Cloudformation
+
+Outputs:
+  MyTestRole:
+    Value: !Ref MyTestRole
+    Description: Name of the role deployed

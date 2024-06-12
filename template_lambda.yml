@@ -1,0 +1,10 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda Function using a Docker image
+
+Resources:
+  Function:
+    Type: AWS::Lambda::Function
+    Properties:
+      PackageType: Image
+      Code: 982528379266.dkr.ecr.eu-west-3.amazonaws.com/process_data:latest
